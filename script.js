@@ -1,3 +1,16 @@
+/*
+Bob est un mineur du Far West, il espère faire fortune, ses activités consiste à creuserALaMine,
+boireAuSaloon, depotPepitesBanque, rentrerMaisonSeReposer.
+
+Quand il creuse à la mine son niveau de fatigue augmente ainsi que sa soif, quand il a recolté suffissament
+d'or pour la journée il se rend à la banque déposer ses pépites.
+
+Sa première priorité est d'abord d'aller boire au saloon s'il a trop soif, ensuite de se reposer à la maison
+s'il est trop fatigué.
+
+Et quand il n'as pas soif et qu'il n'est pas fatigué, et qu'il accumulé suffissament de pépites d'or pour
+la journée il vas les déposer sur son compteBancaire.
+*/
 let soif = false;
 let fatigue = false;
 let assezRiche = false;
@@ -17,10 +30,14 @@ class Personne {
 		compteurPersonne++;
 	}
 	get compteBancaire(){
-		return "Compte en banque de " + this._name + ": " + this._compteBancaire + "gr de pépites d'or";
+		return this._compteBancaire;
 	}
 	set compteBancaire(value){
 		this._compteBancaire = this._compteBancaire + value;
+	}
+	
+	get infoCompteBancaire(){
+		return "Compte en banque de " + this._name + ": " + this._compteBancaire + "gr de pépites d'or";
 	}
 	
 	sePresenter() {
@@ -95,7 +112,7 @@ class depotPepitesBanque extends State{
 		this._nivRichesse = 0;
 		Bob.nivRichesse = this._nivRichesse;
 		console.log(Bob.infoLocalisation);
-		console.log(Bob.compteBancaire);
+		console.log(Bob.infoCompteBancaire);
 	}	
 }
 class creuserALaMine extends State {
@@ -131,7 +148,7 @@ class Mineur extends Personne {
 	}
 	set nivSoif(value){
 		
-		if(value > 0 && value <= 100){
+		if(value > -1){
 			this._nivSoif = value;
 		}
 		else{
@@ -143,7 +160,7 @@ class Mineur extends Personne {
 	}
 	set nivFatigue(value){
 		
-		if(value > 0 && value <= 100){
+		if(value > -1){
 			this._nivFatigue = value;
 		}
 		else{
@@ -155,7 +172,7 @@ class Mineur extends Personne {
 	}
 	set nivRichesse(value){
 		
-		if(value > 0 && value <= 100){
+		if(value > -1){
 			this._nivRichesse = value;
 		}
 		else{
@@ -229,42 +246,11 @@ let BobEtat = new State(Bob.nivSoif,Bob.nivFatigue,Bob.nivRichesse,Bob.localisat
 //Le première état devrait être creuserALaMine
 
 
-while(Bob.compteBancaire != goldenRetreat){
-	/*nivSoifInstance = Bob.nivSoif
-	nivFatigueInstance = Bob.nivFatigue
-	nivRichesseInstance = Bob.nivRichesse
-	localisationInstance = Bob.localisation
-	Bob.verifConditions(Bob.nivSoif,Bob.nivFatigue,Bob.nivRichesse,Bob.localisation);*/
+while(Bob.compteBancaire < goldenRetreat){
 	Bob.verifConditions();
 }
 
 console.log("Bob a fait fortune!");
 
-//***********à effacer
-class Personnage {
-	constructor(nom){
-		//Avec le underscore on privatise la propriété
-		this._nom = nom;
-	}
-	
-	get nom(){
-		return "Mr " + this._nom;
-	}
-	set nom(value){
-		
-		if(value.length > 2){
-			this._nom = value;
-		}
-		else{
-			console.log("Mot trop court");
-		}
-	}
-}
-let arn = new Personnage("Arno");
 
-//console.log(arn.nom());  Ne marche pas
-console.log(arn.nom);
 
-//arn.nom("Arnaud"); Ne marche pas
-arn.nom = "Arnaud";
-console.log(arn.nom);
