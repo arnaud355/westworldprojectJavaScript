@@ -12,6 +12,9 @@ Et quand il n'as pas soif et qu'il n'est pas fatigué, et qu'il accumulé suffis
 la journée il vas les déposer sur son compteBancaire.
 
 Elsa, la femme de Bob, peut faire plusieurs activités, préparer le diner, se coiffer, selon humeur...
+
+Il se peut que l'ivrogne du saloon insulte Bob.
+Bob peut se battre avec l'ivrogne du saloon, l'un des 2 peut même en mourrir.
 */
 let soif = false;
 let fatigue = false;
@@ -26,17 +29,18 @@ let potagerARecolter = false;
 let maturationFruitsLegumes = 49;
 let d1 = 0, d1Milli = 0;
 let BobEstMort = false;
-let santeBob = 100, santeIvrogne = 100;
+let santeBob = 100, santeIvrogne = 100, colereBob = 49, colereIvrogne = 50;
 let coupDePoingsBob = 14;
 const seuilSoifEtFatigue = 80;
 const seuilRichesseJour = 300;
 const goldenRetreat = 10000;
 
 class Personne {
-	constructor(name,sante,forceCoupDePoings,compteBancaire){
+	constructor(name,sante,forceCoupDePoings,colere,compteBancaire){
 		this._name = name;
 		this._sante = sante;
 		this._forceCoupDePoings = forceCoupDePoings;
+		this._colere = colere;
 		this._compteBancaire = compteBancaire;
 		compteurPersonne++;
 	}
@@ -50,7 +54,7 @@ class Personne {
 		return this._sante;
 	}
 	set sante(value){
-		this._sante = this._sante - value;
+		this._sante = value;
 	}
 	get compteBancaire(){
 		return this._compteBancaire;
@@ -72,6 +76,12 @@ class Personne {
 	set forceCoupDePoings(value){
 		this._forceCoupDePoings = value;
 	}
+	get colere(){
+		return this._colere;
+	}
+	set colere(value){
+		this._colere = value;
+	}
 	coupDePoings(){
 		console.log(this._name + " distribue des coups de poings");
 	}
@@ -79,6 +89,17 @@ class Personne {
 		console.log(this._name + " reçoit des coups de poings");
 		this.sante = this.sante - forceCoupDePoings;
 	}
+	changementNivColere(){
+		this.colere = Math.round(Math.random() * 101);
+	}
+	changementForceCoupDePoing(){
+		this.forceCoupDePoings = Math.round(Math.random() * 120) + 5;
+	}
+	static ordreFrappe(){
+		let frapper = Math.round(Math.random() * 1) + 1;
+		return frapper;
+	}
+	
 }
 class State {
 	constructor(nivSoif,nivFatigue,nivRichesse,localisation){
@@ -89,12 +110,12 @@ class State {
 	}
 	
 	changerValeurSoif(){
-		//Après coup de pioche on augmente la valeur de soif aléatoirement entre +5 à +19 + 5
+		//Après coup de pioche on augmente la valeur de soif aléatoirement entre +5 à +19
 		this._nivSoif = this._nivSoif + Math.round(Math.random() * 20) + 5;	
 		Bob.nivSoif = this._nivSoif;
 	}
 	changerValeurFatigue(){
-		//Après coup de pioche on change la valeur de fatigue aléatoirement entre +5 à +19 + 5
+		//Après coup de pioche on change la valeur de fatigue aléatoirement entre +5 à +19
 		this._nivFatigue = this._nivFatigue + Math.round(Math.random() * 20) + 5;	
 		Bob.nivFatigue = this._nivFatigue;
 	}
@@ -111,12 +132,68 @@ class boireAuSaloon extends State {
 		if(this._localisation != "saloon"){
 			Bob.localisation = "saloon";
 		}
+		
+		//Si l'ivrogne n'est pas mort
+		if(ivrogne){
+			BobEtat.rencontreAvecIvrogne();
+		}
+		
 		//Après verre on diminue la valeur aléatoirement entre -1 à -19
 		this._nivSoif = this._nivSoif - Math.round(Math.random() * 20);
 		console.log(Bob.infoLocalisation);
 		console.log("Bob bois un coup au saloon");
 		//On affecte la nouvelle valeur de soif de l'état de Bob dans le niv de soif de Bob
 		Bob.nivSoif = this._nivSoif;
+	}
+	
+	rencontreAvecIvrogne(){
+		let enBagarre = true;
+		
+		ivrogne.changementNivColere();
+		
+		if(ivrogne.colere > 50){
+			console.log("Insulte de l'ivrogne: You little wimp minor!");
+		}
+		
+		while(enBagarre){
+			Bob.changementNivColere();
+				if(Bob.colere <= 50 && ivrogne.colere > 50){
+					console.log("Bob n'est pas énervé et n'as pas envie de se battre, il part");
+				} 
+				
+				if(Bob.sante <= 0 || ivrogne.sante <= 0){
+					enBagarre = false;
+				}
+				
+				if(Bob.colere > 50 && ivrogne.colere > 50){
+					if(Personne.ordreFrappe() == 1){
+						Bob.changementForceCoupDePoing();
+						Bob.coupDePoings();
+						ivrogne.recevoirCoupDePoings(Bob.forceCoupDePoings);
+					}
+					else {
+						ivrogne.changementForceCoupDePoing();
+						ivrogne.coupDePoings();
+						Bob.recevoirCoupDePoings(ivrogne.forceCoupDePoings);
+					}
+				}
+				else {
+					enBagarre = false;
+				}
+			/*On place l'ivrogne suite au bloc car on ne vas pas changer la colere de l'ivrogne après
+			qu'il est insulté Bob, car cette insulte est sensé dire que l'vrogne trouve un pretexte
+			pour se battre, il ne vas pas l'insulter puis avoir une colère qui diminue en dessous de 50*/
+			ivrogne.changementNivColere();
+		}
+		
+		if(ivrogne.sante <= 0){
+			//supprimer instance ivrogne
+			ivrogne = null;
+			console.log("L'ivrogne du saloon est mort sous les coups de poings de Bob");
+		}
+		if(Bob.sante <= 0){
+			BobEstMort = true;
+		}
 	}
 }
 class rentrerMaisonSeReposer extends State{
@@ -141,6 +218,24 @@ class rentrerMaisonSeReposer extends State{
 			if(Bob.nivSoif < 80){
 				Bob.localisation = "home";
 				console.log("Chérie j'ai entendu ton message, je rentre pour diner");
+				//Si Bob est toujours vivant
+				if(Bob){
+					Bob.sante = Bob.sante + 8;
+					if(Bob.sante > 100){
+						Bob.sante = 100;
+					}
+					console.log("Après dîner la santé de Bob a pris +20 de santé: " + Bob.sante );
+				}
+					
+				//L'ivrogne, lui aussi retrouve 20 pts de vie, à part si il est déjà mort
+				if(ivrogne){
+					ivrogne.sante = ivrogne.sante + 8;
+					if(ivrogne.sante > 100){
+						ivrogne.sante = 100;
+					}
+					console.log("Après le dîner, de son côté, l'ivrogne a pris +20 de santé: " + ivrogne.sante);
+				}
+				
 			}
 			else {
 				BobEtat = new boireAuSaloon(Bob.nivSoif,Bob.nivFatigue,Bob.nivRichesse,Bob.localisation);
@@ -199,8 +294,8 @@ class creuserALaMine extends State {
 	}	
 }
 class FemmeMineur extends Personne {
-	constructor(name,compteBancaire,humeurElsa,probaDiner,dinerServi,potagerARecolter,maturationFruitsLegumes){
-		super(name,compteBancaire);
+	constructor(name,sante,forceCoupDePoings,colere,compteBancaire,humeurElsa,probaDiner,dinerServi,potagerARecolter,maturationFruitsLegumes){
+		super(name,sante,forceCoupDePoings,colere,compteBancaire);
 		this._humeurElsa = humeurElsa;
 		this._probaDiner = probaDiner;
 		this._dinerServi = dinerServi;
@@ -371,8 +466,8 @@ class Messagerie {
 	}
 }
 class Mineur extends Personne {
-	constructor(name,sante,forceCoupDePoings,compteBancaire,nivSoif,nivFatigue,nivRichesse,localisation){
-		super(name,sante,forceCoupDePoings,compteBancaire);
+	constructor(name,sante,forceCoupDePoings,colereBob,compteBancaire,nivSoif,nivFatigue,nivRichesse,localisation){
+		super(name,sante,forceCoupDePoings,colereBob,compteBancaire);
 		this._nivSoif = nivSoif;
 		this._nivFatigue = nivFatigue;
 		this._nivRichesse = nivRichesse;
@@ -522,18 +617,20 @@ class Mineur extends Personne {
 	}	
 }
 
-let Bob = new Mineur("Bob",santeBob,coupDePoingsBob,compteBancaire,nivSoif,nivFatigue,nivRichesse,localisation);
+let Bob = new Mineur("Bob",santeBob,coupDePoingsBob,colereBob,compteBancaire,nivSoif,nivFatigue,nivRichesse,localisation);
+
+//On crée l'état de Bob, sur la classe mère State, le première état fille devrait être creuserALaMine
 let BobEtat = new State(Bob.nivSoif,Bob.nivFatigue,Bob.nivRichesse,Bob.localisation);
 
-let Elsa = new FemmeMineur("Elsa",compteBancaire,humeurElsa,probaDiner,dinerServi,potagerARecolter,maturationFruitsLegumes);
+let Elsa = new FemmeMineur("Elsa",100,10,50,compteBancaire,humeurElsa,probaDiner,dinerServi,potagerARecolter,maturationFruitsLegumes);
 let ElsaEtat = new StatefemmeMineur(Elsa.humeurElsa);
 
 let messageElsa = new Messagerie();
 let messageBob = new Messagerie();
 
-let ivrogne = new Personne("L'ivrogne",santeIvrogne,15,200);
+let ivrogne = new Personne("L'ivrogne",santeIvrogne,15,colereIvrogne,200);
 
-//Le première état devrait être creuserALaMine
+
 
 while(Bob.compteBancaire < goldenRetreat && !BobEstMort){
 	Bob.verifConditions();
@@ -542,10 +639,10 @@ while(Bob.compteBancaire < goldenRetreat && !BobEstMort){
 if(Bob.compteBancaire > goldenRetreat){
 	console.log("Bob a fait fortune!");
 }
-else{
-	console.log("Bob is dead!");
-}
 
+if(BobEstMort){
+	console.log("Bob is dead after his injuries at the saloon, he lost his fight against the boozer!");
+}
 
 
 
